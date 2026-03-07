@@ -1,0 +1,12 @@
+.vs/
+.idea/
+*.user
+*.DotSettings.user
+
+
+bin/
+obj/
+
+
+.DS_Store
+Thumbs.db

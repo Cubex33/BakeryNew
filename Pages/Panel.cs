@@ -1,4 +1,5 @@
 ﻿using BakeryApp.Models;
+using Microsoft.Maui.Controls;
 
 namespace SP2.Pages
 {
@@ -9,38 +10,44 @@ namespace SP2.Pages
         Button reportOpenButton;
         Button addUserOpenButton;
         VerticalStackLayout cassaPanel;
+        public VerticalStackLayout mainPanel;
         Dictionary<int, (int quatity, decimal price, int id)> selectitems = new();  
         Label count;
         int countProducts;
+
+        public OpenReportPanel reportPanel;
+        public OpenUserPanel userPanel;
+
         Picker picker = new Picker
         {
             Title = "Выберите клиента: "
         };
         int customerId = 0;
-        bool panelIsOpened;
-
-        EventHandler pickerHandler;
+        bool panelIsOpened = false;
 
         public Panel() {
+            reportPanel = new OpenReportPanel(this);
+            userPanel = new OpenUserPanel(this);
+
             cassaOpenButton = new Button { Text = "Cassa", Margin = new Thickness(2) };
 
             reportOpenButton = new Button { Text = "Report", Margin = new Thickness(2) };
 
             addUserOpenButton = new Button { Text = "Users", Margin = new Thickness(2) };
 
+            reportOpenButton.Clicked += (_, _) => reportPanel.OpenPanel();
+
+            addUserOpenButton.Clicked += (_, _) => userPanel.OpenPanel();
+
             cassaPanel = new VerticalStackLayout { IsVisible = false };
+
+            mainPanel = new VerticalStackLayout { Children = { cassaOpenButton, reportOpenButton, addUserOpenButton } };
 
             cassaOpenButton.Clicked += async (_, _) => await OpenCassa();
 
             if (Session.IsAdmin)
             {
-                Content = new VerticalStackLayout
-                {
-                    Children =
-                    {
-                        cassaOpenButton, reportOpenButton, addUserOpenButton
-                    }
-                };
+                Content = mainPanel;
             }
             else
             {
@@ -49,11 +56,28 @@ namespace SP2.Pages
 
         }
 
+        
+
         public async Task OpenCassa()
         {
             cassaPanel.Children.Clear();
             Product product = new();
             cassaPanel.IsVisible = true;
+
+            var closeCassa = new Button
+            {
+                Text = "Назад",
+                HorizontalOptions = LayoutOptions.Start,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            closeCassa.Clicked += (_, _) =>
+            {
+                cassaPanel.IsVisible = false;
+                Content = mainPanel;
+            };
+
+            cassaPanel.Children.Add(closeCassa);
 
             var label = new Label
             {
@@ -66,13 +90,10 @@ namespace SP2.Pages
 
             cassaPanel.Children.Add( picker );
 
-            if (pickerHandler != null)
+            if (!panelIsOpened)
             {
-                picker.SelectedIndexChanged -= pickerHandler;
+                picker.SelectedIndexChanged += async (_, _) => await ChangeCustomer();
             }
-
-            pickerHandler = async (_, _) => await ChangeCustomer();
-            picker.SelectedIndexChanged += pickerHandler;
 
             foreach (var items in dbContext.Products)
             {
@@ -110,7 +131,7 @@ namespace SP2.Pages
 
         public void UpdatePicker()
         {
-           picker.Items.Clear();
+            picker.Items.Clear();
             foreach (var customers in dbContext.Customers)
             {
                 picker.Items.Add($"{customers.LastName} {customers.FirstName}");
@@ -132,6 +153,7 @@ namespace SP2.Pages
                         cancel: "Отмена",
                         placeholder: "Ввидите имя клиента"
                     );
+                    if (firstname == null) picker.SelectedIndex = -1; return;
                     var lastname = await DisplayPromptAsync(
                         title: "Создание пользователя 2/4",
                         message: null,
@@ -139,6 +161,7 @@ namespace SP2.Pages
                         cancel: "Отмена",
                         placeholder: "Ввидите фамилию клиента"
                     );
+                    if (lastname == null) picker.SelectedIndex = -1; return;
                     var phone = await DisplayPromptAsync(
                         title: "Создание пользователя 3/4",
                         message: null,
@@ -147,6 +170,7 @@ namespace SP2.Pages
                         placeholder: "Ввидите номер клиента",
                         keyboard: Keyboard.Telephone
                     );
+                    if (phone == null) picker.SelectedIndex = -1; return;
                     var email = await DisplayPromptAsync(
                         title: "Создание пользователя 4/4",
                         message: null,
@@ -155,10 +179,7 @@ namespace SP2.Pages
                         placeholder: "Ввидите почту клиента",
                         keyboard: Keyboard.Email
                     );
-                    if (firstname == null) return;
-                    if (lastname == null) return;
-                    if (phone == null) return;
-                    if (email == null) return;
+                    if (email == null) picker.SelectedIndex = -1; return;
                     var newCustomers = new Customer
                     {
                         FirstName = firstname,

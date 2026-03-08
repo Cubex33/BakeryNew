@@ -1,7 +1,6 @@
-﻿using SP2.Pages;
-using BakeryApp.Models;
+﻿using BakeryApp.Models;
 
-namespace SP2
+namespace SP2.Pages
 {
     public class OpenUserPanel
     {

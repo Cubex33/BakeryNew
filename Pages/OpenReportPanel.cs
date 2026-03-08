@@ -1,8 +1,7 @@
 ﻿using BakeryApp.Models;
 using Microsoft.EntityFrameworkCore;
-using SP2.Pages;
 
-namespace SP2
+namespace SP2.Pages
 {
     public class OpenReportPanel : ContentPage
     {

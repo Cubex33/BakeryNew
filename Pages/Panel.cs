@@ -1,5 +1,4 @@
-﻿
-using BakeryApp.Models;
+﻿using BakeryApp.Models;
 
 namespace SP2.Pages
 {
@@ -18,6 +17,9 @@ namespace SP2.Pages
             Title = "Выберите клиента: "
         };
         int customerId = 0;
+        bool panelIsOpened;
+
+        EventHandler pickerHandler;
 
         public Panel() {
             cassaOpenButton = new Button { Text = "Cassa", Margin = new Thickness(2) };
@@ -49,13 +51,9 @@ namespace SP2.Pages
 
         public async Task OpenCassa()
         {
+            cassaPanel.Children.Clear();
             Product product = new();
             cassaPanel.IsVisible = true;
-
-            foreach (var customers in dbContext.Customers)
-            {
-                picker.Items.Add($"{customers.LastName} {customers.FirstName}");
-            }
 
             var label = new Label
             {
@@ -68,7 +66,13 @@ namespace SP2.Pages
 
             cassaPanel.Children.Add( picker );
 
-            picker.SelectedIndexChanged += async (_, _) => await ChangeCustomer();
+            if (pickerHandler != null)
+            {
+                picker.SelectedIndexChanged -= pickerHandler;
+            }
+
+            pickerHandler = async (_, _) => await ChangeCustomer();
+            picker.SelectedIndexChanged += pickerHandler;
 
             foreach (var items in dbContext.Products)
             {
@@ -101,13 +105,79 @@ namespace SP2.Pages
             }
             countingButton.Clicked += async (_, _) => await BuyLot(product);
             cassaPanel.Children.Add(countingButton);
+            UpdatePicker();
+        }
+
+        public void UpdatePicker()
+        {
+           picker.Items.Clear();
+            foreach (var customers in dbContext.Customers)
+            {
+                picker.Items.Add($"{customers.LastName} {customers.FirstName}");
+            }
+            picker.Items.Add("Добавить пользователя");
         }
 
         public async Task ChangeCustomer()
         {
-            if (picker.SelectedIndex != -1)
+            try
             {
-                customerId = picker.SelectedIndex;
+                var lengthPicker = picker.Items.Count;
+                if (picker.SelectedIndex == lengthPicker - 1)
+                {
+                    var firstname = await DisplayPromptAsync(
+                        title: "Создание пользователя 1/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите имя клиента"
+                    );
+                    var lastname = await DisplayPromptAsync(
+                        title: "Создание пользователя 2/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите фамилию клиента"
+                    );
+                    var phone = await DisplayPromptAsync(
+                        title: "Создание пользователя 3/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите номер клиента",
+                        keyboard: Keyboard.Telephone
+                    );
+                    var email = await DisplayPromptAsync(
+                        title: "Создание пользователя 4/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите почту клиента",
+                        keyboard: Keyboard.Email
+                    );
+                    if (firstname == null) return;
+                    if (lastname == null) return;
+                    if (phone == null) return;
+                    if (email == null) return;
+                    var newCustomers = new Customer
+                    {
+                        FirstName = firstname,
+                        LastName = lastname,
+                        Phone = phone,
+                        Email = email
+                    };
+                    dbContext.Customers.Add(newCustomers);
+                    await dbContext.SaveChangesAsync();
+                    UpdatePicker();
+                }
+                else if (picker.SelectedIndex != -1 && picker.SelectedIndex != lengthPicker)
+                {
+                    customerId = picker.SelectedIndex;
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Ошибка", $"{ex.InnerException?.Message ?? ex.Message}", "Ok");
             }
         }
 

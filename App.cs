@@ -2,11 +2,12 @@
 
     namespace SP2
     {
-        public partial class App : Application
+    public partial class App : Application
+    {
+        [Obsolete("This constructor is obsolete. Use the constructor with parameters instead.")]
+        public App()
         {
-            protected override Window CreateWindow(IActivationState? activationState)
-            {
-                return new Window(new AppShell());
-            }
+            MainPage = new NavigationPage(new MainPage());
         }
+    }
 }

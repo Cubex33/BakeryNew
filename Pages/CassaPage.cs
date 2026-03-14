@@ -13,13 +13,10 @@ namespace SP2.Pages
         public CassaPage()
         {
             Title = "Cassa";
-            var backButton = new Button { Text = "Назад" };
-            backButton.Clicked += (_, _) => Navigation.PopAsync();
 
             
             UpdatePicker();
 
-            cassaLayout.Children.Add(backButton);
             cassaLayout.Children.Add(customerPicker);
 
             foreach (var product in dbContext.Products)

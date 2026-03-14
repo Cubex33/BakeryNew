@@ -13,10 +13,6 @@ namespace SP2.Pages
             Title = "Reports";
             var layout = new VerticalStackLayout { Padding = 10, Spacing = 5 };
 
-            var backButton = new Button { Text = "Назад" };
-            backButton.Clicked += (_, _) => Navigation.PopAsync();
-            layout.Children.Add(backButton);
-
             var orders = dbContext.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)

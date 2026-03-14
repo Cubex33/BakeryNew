@@ -13,14 +13,18 @@ namespace SP2.Pages
         public CassaPage()
         {
             Title = "Cassa";
-            var backButton = new Button { Text = "Назад" };
-            backButton.Clicked += (_, _) => Navigation.PopAsync();
 
-            
+            customerPicker.SelectedIndexChanged += async (_, _) => await ChangeCustomer();
+
+
             UpdatePicker();
+    
 
-            cassaLayout.Children.Add(backButton);
             cassaLayout.Children.Add(customerPicker);
+
+            var scrollview = new ScrollView { HeightRequest = 400 };
+
+            var productsContainer = new VerticalStackLayout { Spacing = 10 };
 
             foreach (var product in dbContext.Products)
             {
@@ -30,7 +34,7 @@ namespace SP2.Pages
                 var addButton = new Button { Text = "Добавить/изменить" };
                 addButton.Clicked += async (_, _) => await CountLot(product, quantityLabel);
 
-                cassaLayout.Children.Add(new HorizontalStackLayout
+                var row = new HorizontalStackLayout
                 {
                     Children =
                     {
@@ -38,8 +42,14 @@ namespace SP2.Pages
                         addButton,
                         quantityLabel
                     }
-                });
+                };
+
+                productsContainer.Children.Add(row);
             }
+
+            scrollview.Content = productsContainer;
+
+            cassaLayout.Children.Add(scrollview);
 
             var buyButton = new Button { Text = "Посчитать" };
             buyButton.Clicked += async (_, _) => await BuyLot();
@@ -47,6 +57,8 @@ namespace SP2.Pages
             cassaLayout.Children.Add(buyButton);
             Content = new ScrollView { Content = cassaLayout };
         }
+
+
 
         void UpdatePicker()
         {
@@ -75,6 +87,66 @@ namespace SP2.Pages
             }
         }
 
+        public async Task ChangeCustomer()
+        {
+            try
+            {
+                var lengthPicker = customerPicker.Items.Count;
+                if (customerPicker.SelectedIndex == lengthPicker - 1 && customerPicker.SelectedIndex != -1)
+                {
+                    var firstname = await DisplayPromptAsync(
+                        title: "Создание пользователя 1/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите имя клиента"
+                    );
+                    if (firstname == null) { customerPicker.SelectedIndex = -1; return; }
+                    var lastname = await DisplayPromptAsync(
+                        title: "Создание пользователя 2/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите фамилию клиента"
+                    );
+                    if (lastname == null) { customerPicker.SelectedIndex = -1; return; }
+                    var phone = await DisplayPromptAsync(
+                        title: "Создание пользователя 3/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите номер клиента",
+                        keyboard: Keyboard.Telephone
+                    );
+                    if (phone == null) { customerPicker.SelectedIndex = -1; return; }
+                    var email = await DisplayPromptAsync(
+                        title: "Создание пользователя 4/4",
+                        message: null,
+                        accept: "Далее",
+                        cancel: "Отмена",
+                        placeholder: "Ввидите почту клиента",
+                        keyboard: Keyboard.Email
+                    );
+                    if (email == null) { customerPicker.SelectedIndex = -1; return; }
+                    var newCustomers = new Customer
+                    {
+                        FirstName = firstname,
+                        LastName = lastname,
+                        Phone = phone,
+                        Email = email
+                    };
+                    dbContext.Customers.Add(newCustomers);
+                    await dbContext.SaveChangesAsync();
+                    customerPicker.SelectedIndex = -1;
+                    UpdatePicker();
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Ошибка", $"{ex.InnerException?.Message ?? ex.Message}", "Ok");
+            }
+        }
+
         async Task BuyLot()
         {
             var itemsToBuy = selectedItems.Values.Where(x => x.quantity > 0).ToList();
@@ -96,7 +168,7 @@ namespace SP2.Pages
             var order = new Order
             {
                 EmployeeId = Session.UserId,
-                CustomerId = customerPicker.SelectedIndex // упрощенно
+                CustomerId = customerPicker.SelectedIndex + 1
             };
             dbContext.Orders.Add(order);
             await dbContext.SaveChangesAsync();

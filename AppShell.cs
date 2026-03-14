@@ -14,5 +14,15 @@ namespace SP2
             flyoutItem.Items.Add(new ShellContent { Title = "Users", ContentTemplate = new DataTemplate(typeof(UsersPage)), Route = nameof(UsersPage) });
             Items.Add(flyoutItem);
         }
+
+        public void ShowLogin()
+        {
+
+        }
+
+        public void ShowApp()
+        {
+
+        }
     }
 }

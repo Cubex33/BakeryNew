@@ -13,6 +13,7 @@ namespace SP2.Pages
             cassaButton.Clicked += async (_, _) => await Navigation.PushAsync(new CassaPage());
             reportsButton.Clicked += async (_, _) => await Navigation.PushAsync(new ReportsPage());
             usersButton.Clicked += async (_, _) => await Navigation.PushAsync(new UsersPage());
+            
 
             Content = new VerticalStackLayout
             {

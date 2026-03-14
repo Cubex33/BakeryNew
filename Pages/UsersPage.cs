@@ -1,5 +1,4 @@
 ﻿using BakeryApp.Models;
-using Microsoft.Maui.Controls;
 
 namespace SP2.Pages
 {
@@ -11,10 +10,6 @@ namespace SP2.Pages
         {
             Title = "Users";
             var layout = new VerticalStackLayout { Padding = 10, Spacing = 5 };
-
-            var backButton = new Button { Text = "Назад" };
-            backButton.Clicked += (_, _) => Navigation.PopAsync();
-            layout.Children.Add(backButton);
 
             foreach (var user in dbContext.Employees)
             {

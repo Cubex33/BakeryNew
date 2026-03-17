@@ -1,24 +1,28 @@
-﻿using BakeryApp.Models;
+﻿using EF.Models;
 using Microsoft.Maui.Controls;
 
 namespace SP2.Pages
 {
     public class CassaPage : ContentPage
     {
-        BakeryDbContext dbContext = new BakeryDbContext();
         Picker customerPicker = new() { Title = "Выберите клиента:" };
         VerticalStackLayout cassaLayout = new() { Padding = 10, Spacing = 5 };
         Dictionary<int, (int quantity, decimal price, int id)> selectedItems = new();
+        bool isChecked;
+
+        HorizontalStackLayout saleUseStack = new HorizontalStackLayout();
+
+        List<int> customerIds = new();
 
         public CassaPage()
         {
             Title = "Cassa";
 
-            customerPicker.SelectedIndexChanged += async (_, _) => await ChangeCustomer();
+            customerPicker.SelectedIndexChanged += async (_, _) => { await ChangeCustomer(); await CheckDiscount(); } ;
 
 
             UpdatePicker();
-    
+
 
             cassaLayout.Children.Add(customerPicker);
 
@@ -26,7 +30,7 @@ namespace SP2.Pages
 
             var productsContainer = new VerticalStackLayout { Spacing = 10 };
 
-            foreach (var product in dbContext.Products)
+            foreach (var product in DataProvider.dbContext.Products)
             {
                 selectedItems[product.Id] = (0, product.Price, product.Id);
 
@@ -47,6 +51,28 @@ namespace SP2.Pages
                 productsContainer.Children.Add(row);
             }
 
+            var checkbox = new CheckBox
+            {
+                Margin = new Thickness(-10, 0, -10, 0)
+            };
+
+            var labelcheckbox = new Label
+            {
+                Text = "Использовать скидку",
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            saleUseStack = new HorizontalStackLayout
+            {
+                Spacing = 4,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            saleUseStack.Children.Add(checkbox);
+            saleUseStack.Children.Add(labelcheckbox);
+
+            checkbox.CheckedChanged += (s, e) => isChecked = e.Value;
+
             scrollview.Content = productsContainer;
 
             cassaLayout.Children.Add(scrollview);
@@ -54,18 +80,35 @@ namespace SP2.Pages
             var buyButton = new Button { Text = "Посчитать" };
             buyButton.Clicked += async (_, _) => await BuyLot();
 
+            cassaLayout.Children.Add(saleUseStack);
+
+            saleUseStack.IsVisible = false;
+
             cassaLayout.Children.Add(buyButton);
             Content = new ScrollView { Content = cassaLayout };
         }
+        async Task CheckDiscount()
+        {
+            if (customerPicker.SelectedIndex == -1 ||
+                customerPicker.SelectedIndex >= customerIds.Count)
+            {
+                saleUseStack.IsVisible = false;
+                return;
+            }
 
+            int realId = customerIds[customerPicker.SelectedIndex];
+            var customer = DataProvider.dbContext.Customers.FirstOrDefault(c => c.Id == realId);
 
-
+            saleUseStack.IsVisible = customer?.Activion == 1;
+        }
         void UpdatePicker()
         {
             customerPicker.Items.Clear();
-            foreach (var customer in dbContext.Customers)
+            customerIds.Clear();
+            foreach (var customer in DataProvider.dbContext.Customers)
             {
                 customerPicker.Items.Add($"{customer.LastName} {customer.FirstName}");
+                customerIds.Add(customer.Id); // сохраняем реальный ID
             }
             customerPicker.Items.Add("Добавить пользователя");
         }
@@ -135,8 +178,8 @@ namespace SP2.Pages
                         Phone = phone,
                         Email = email
                     };
-                    dbContext.Customers.Add(newCustomers);
-                    await dbContext.SaveChangesAsync();
+                    DataProvider.dbContext.Customers.Add(newCustomers);
+                    await DataProvider.dbContext.SaveChangesAsync();
                     customerPicker.SelectedIndex = -1;
                     UpdatePicker();
                 }
@@ -165,26 +208,48 @@ namespace SP2.Pages
             var confirmation = await DisplayAlert("Подтверждение", "Подтверждаете продажу?", "Да", "Нет");
             if (!confirmation) return;
 
+            int realId = customerIds[customerPicker.SelectedIndex];
+
             var order = new Order
             {
                 EmployeeId = Session.UserId,
-                CustomerId = customerPicker.SelectedIndex + 1
+                CustomerId = realId
             };
-            dbContext.Orders.Add(order);
-            await dbContext.SaveChangesAsync();
+            DataProvider.dbContext.Orders.Add(order);
 
-            foreach (var item in itemsToBuy)
+            var customer = await DataProvider.dbContext.Customers.FindAsync(realId);
+
+            await DataProvider.dbContext.SaveChangesAsync();
+
+            if (isChecked)
             {
-                dbContext.OrderItems.Add(new OrderItem
+                foreach (var item in itemsToBuy)
                 {
-                    OrderId = order.Id,
-                    ProductId = item.id,
-                    Quantity = item.quantity,
-                    Price = item.price
-                });
+                    DataProvider.dbContext.OrderItems.Add(new OrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductId = item.id,
+                        Quantity = item.quantity,
+                        Price = item.price * (1 - (customer.Discount ?? 0) / 100m)
+                    });
+                }
+                customer.Activion = 0;
+            }
+            else
+            {
+                foreach (var item in itemsToBuy)
+                {
+                    DataProvider.dbContext.OrderItems.Add(new OrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductId = item.id,
+                        Quantity = item.quantity,
+                        Price = item.price
+                    });
+                }
             }
 
-            await dbContext.SaveChangesAsync();
+            await DataProvider.dbContext.SaveChangesAsync();
             await DisplayAlert("Успешно", "Заказ создан", "Ok");
         }
     }

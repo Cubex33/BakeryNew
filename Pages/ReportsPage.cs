@@ -1,4 +1,4 @@
-﻿using BakeryApp.Models;
+﻿using EF.Models;
 using Microsoft.Maui.Controls;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,14 +6,14 @@ namespace SP2.Pages
 {
     public class ReportsPage : ContentPage
     {
-        BakeryDbContext dbContext = new BakeryDbContext();
 
         public ReportsPage()
         {
             Title = "Reports";
             var layout = new VerticalStackLayout { Padding = 10, Spacing = 5 };
 
-            var orders = dbContext.Orders
+
+            var orders = DataProvider.dbContext.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
                 .Include(o => o.OrderItems)

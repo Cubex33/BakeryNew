@@ -1,12 +1,10 @@
-﻿using BakeryApp.Models;
+﻿using EF.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace SP2.Pages
 {
     public class MainPage : ContentPage
     {
-        BakeryDbContext dbContext = new BakeryDbContext();
-
         Entry usernameInputField = new()
         {
             Text = "admin",
@@ -121,7 +119,7 @@ namespace SP2.Pages
         //}
         private async Task CheckUser()
         {
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == usernameInputField.Text && u.Password == passwordInputField.Text);
+            var user = await DataProvider.dbContext.Users.FirstOrDefaultAsync(u => u.Username == usernameInputField.Text && u.Password == passwordInputField.Text);
             if (user == null) return;
             Session.UserId = user.Id;
             Session.IsAdmin = user.IsAdmin;

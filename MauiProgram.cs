@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace SP2
 {
@@ -18,7 +19,7 @@ namespace SP2
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
-
+            DataProvider.init();
             return builder.Build();
         }
     }

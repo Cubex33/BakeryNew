@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace BakeryApp.Models;
+namespace EF.Models;
 
 public partial class BakeryDbContext : DbContext
 {
@@ -33,17 +33,17 @@ public partial class BakeryDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.\\CUBEX33SQLSERVER;Database=bakery_db;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=.\\CUBEX33SQLSERVER;Database=bakery_db;Trusted_Connection=True; TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__categori__3213E83F10DD9068");
+            entity.HasKey(e => e.Id).HasName("PK__categori__3213E83F17AE5654");
 
             entity.ToTable("categories");
 
-            entity.HasIndex(e => e.Name, "UQ__categori__72E12F1BE4285F0A").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__categori__72E12F1B4A72BA58").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
@@ -54,41 +54,26 @@ public partial class BakeryDbContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__customer__3213E83F8EF99DE5");
+            entity.HasKey(e => e.Id).HasName("PK__Customer__3214EC074E0D98E6");
 
-            entity.ToTable("customers");
-
-            entity.HasIndex(e => e.Phone, "UQ__customer__B43B145F481D04E9").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Email)
-                .HasMaxLength(150)
-                .IsUnicode(false)
-                .HasColumnName("email");
-            entity.Property(e => e.FirstName)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("first_name");
-            entity.Property(e => e.LastName)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("last_name");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("phone");
+            entity.Property(e => e.Activion).HasDefaultValue(0);
+            entity.Property(e => e.Discount).HasDefaultValue(0);
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.FirstName).HasMaxLength(100);
+            entity.Property(e => e.LastName).HasMaxLength(100);
+            entity.Property(e => e.Phone).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Discount>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Discount__3214EC07BC457F5D");
+            entity.HasKey(e => e.Id).HasName("PK__Discount__3214EC0713DD4770");
 
             entity.ToTable("Discount");
         });
 
         modelBuilder.Entity<Employee>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__employee__3213E83FE9903361");
+            entity.HasKey(e => e.Id).HasName("PK__employee__3213E83F1E794F7E");
 
             entity.ToTable("employees");
 
@@ -113,7 +98,7 @@ public partial class BakeryDbContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__orders__3213E83F9E1550E6");
+            entity.HasKey(e => e.Id).HasName("PK__orders__3213E83F19F0BA76");
 
             entity.ToTable("orders");
 
@@ -131,18 +116,17 @@ public partial class BakeryDbContext : DbContext
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CustomerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__orders__customer__59FA5E80");
+                .HasConstraintName("FK_Orders_Customers");
 
             entity.HasOne(d => d.Employee).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.EmployeeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__orders__employee__5AEE82B9");
+                .HasConstraintName("FK__orders__employee__5FB337D6");
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => new { e.OrderId, e.ProductId }).HasName("PK__order_it__022945F6B005BDA0");
+            entity.HasKey(e => new { e.OrderId, e.ProductId }).HasName("PK__order_it__022945F64CCFF77C");
 
             entity.ToTable("order_items", tb => tb.HasTrigger("trg_update_order_total"));
 
@@ -155,17 +139,17 @@ public partial class BakeryDbContext : DbContext
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK__order_ite__order__5FB337D6");
+                .HasConstraintName("FK__order_ite__order__5CD6CB2B");
 
             entity.HasOne(d => d.Product).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__order_ite__produ__60A75C0F");
+                .HasConstraintName("FK__order_ite__produ__5DCAEF64");
         });
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__products__3213E83F4EF30F15");
+            entity.HasKey(e => e.Id).HasName("PK__products__3213E83FD6D7A98B");
 
             entity.ToTable("products");
 
@@ -182,12 +166,12 @@ public partial class BakeryDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__products__catego__5441852A");
+                .HasConstraintName("FK__products__catego__60A75C0F");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC07185F5ED4");
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC07F8D49429");
 
             entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.Username).HasMaxLength(50);

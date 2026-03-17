@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BakeryApp.Models;
+namespace EF.Models;
 
 public partial class Discount
 {
